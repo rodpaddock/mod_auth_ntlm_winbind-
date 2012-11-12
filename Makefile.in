@@ -1,0 +1,70 @@
+#
+# Makefile for mod_auth_ntlm_winbind
+#
+
+# Programs
+
+APXS = @APXS@
+APXS_FLAGS = @APXS_FLAGS@
+SODIR = @SODIR@
+APXSLIBDIR=$(DESTDIR)/$(shell $(APXS) -q LIBEXECDIR)
+
+# Build the dso
+MOD_NTLM_WINBIND_SRC = mod_auth_ntlm_winbind.c
+
+$(SODIR)mod_auth_ntlm_winbind.so: $(MOD_NTLM_WINBIND_SRC)
+	$(APXS) $(APXS_FLAGS) -Wc,-Wall -c $(MOD_NTLM_WINBIND_SRC)
+
+install: $(SODIR)mod_auth_ntlm_winbind.so
+	$(APXS) $(APXS_FLAGS) -S LIBEXECDIR=$(APXSLIBDIR) -n auth_ntlm_winbind -i $(SODIR)mod_auth_ntlm_winbind.so
+
+tarball: distclean
+	@case "$${RELEASE}" in \
+		1|y|Y|yes|Yes) ;; \
+		*) \
+			TMPDIR=$$( mktemp -d __SVN_VERSION.XXXXXXXX); \
+			if test $$? -ne 0; then \
+				echo "Can't create temp dir to store svn version. "; \
+				exit 1; \
+			fi; \
+			mv VERSION "$${TMPDIR}/"; \
+			cp -p "$${TMPDIR}/VERSION" .; \
+			echo "MOD_AUTH_NTLM_WINBIND_SVNVERSION=\"$$( svnversion)\"" \
+				>>VERSION; \
+			;; \
+	esac; \
+	. VERSION; \
+	TARBALL_VERSION="$${MOD_AUTH_NTLM_WINBIND_VERSION}$${MOD_AUTH_NTLM_WINBIND_SVNVERSION:+.lorikeet_svn_$${MOD_AUTH_NTLM_WINBIND_SVNVERSION}}"; \
+	TARBALL_BASENAME="mod_auth_ntlm_winbind-$${TARBALL_VERSION}"; \
+	echo "Creating ../$${TARBALL_BASENAME}.tar.bz2 "; \
+	pushd .. >/dev/null; \
+	if ! test -e "$${TARBALL_BASENAME}"; then \
+		TARBALL_SYMLINK_CREATED="yes"; \
+		ln -s mod_auth_ntlm_winbind "$${TARBALL_BASENAME}"; \
+	fi; \
+	tar cfhj "$${TARBALL_BASENAME}.tar.bz2" \
+		--exclude=__SVN_VERSION.???????? \
+		--exclude=.*.swp \
+		--exclude=.svn \
+		"$${TARBALL_BASENAME}"; \
+	test "$${TARBALL_SYMLINK_CREATED}" = "yes" && \
+		rm "$${TARBALL_BASENAME}"; \
+	popd >/dev/null; \
+	if test -d "$$TMPDIR"; then \
+		test -f "$${TMPDIR}/VERSION" && \
+			mv "$${TMPDIR}/VERSION" .; \
+		rmdir "$${TMPDIR}"; \
+	fi
+
+# Clean targets
+clean:
+	@rm -f *~ $(MOD_NTLM_WINBIND_SRC:.c=.{la,lo,o,slo})
+	@rm -rf $(SODIR)
+
+realclean: clean
+	@rm -f config.log
+
+distclean: realclean
+	@rm -f config.h Makefile \
+	config.status config.cache
+	@rm -rf autom4te.cache

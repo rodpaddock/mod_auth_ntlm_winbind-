@@ -1,0 +1,11 @@
+LoadModule: auth_ntlm_winbind_module /usr/lib/apache/1.3/mod_auth_ntlm_winbind.so
+Directives:
+ NTLMAuth
+ NegotiateAuth
+ NTLMBasicAuthoritative
+ NTLMAuthHelper
+ NegotiateAuthHelper
+ PlaintextAuthHelper
+ NTLMBasicAuth
+ NTLMBasicRealm
+Description: Support for NTLM authentication using Winbind
